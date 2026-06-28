@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contains passwords & tokens — never commit)
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# Accidental duplicate folders
+Frontend/Backend/
+Frontend/Frontend/

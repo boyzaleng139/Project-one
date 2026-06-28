@@ -15,7 +15,7 @@ function todayThai() {
 /* ── Dashboard ───────────────────────────────────────────── */
 
 /**
- * Live monitoring dashboard — MOCK DATA mode.
+ * Live monitoring dashboard.
  *
  * Layout:
  *   StatusBar       (full width, top)
@@ -24,7 +24,7 @@ function todayThai() {
  *   TempChart       (full width)
  *   Footer note
  *
- * All data is received as props from App.jsx / useMockData().
+ * All data is received as props from App.jsx via useLiveData().
  */
 export default function Dashboard({ temperature, chartData, lastUpdate, isConnected }) {
   const today = useMemo(() => todayThai(), []);
@@ -52,7 +52,7 @@ export default function Dashboard({ temperature, chartData, lastUpdate, isConnec
 
         {/* Footer */}
         <p className="dashboard-footer">
-          🎭 โหมดจำลองข้อมูล (Mock Mode) • อัปเดตทุก 3 วินาที
+          🔴 เชื่อมต่อ Backend • อัปเดตอัตโนมัติผ่าน Socket.io
         </p>
 
       </div>

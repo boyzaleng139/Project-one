@@ -1,17 +1,19 @@
 'use strict'
 require('dotenv').config()
 
-const express       = require('express')
-const http          = require('http')
-const cors          = require('cors')
-const { Server }    = require('socket.io')
-const { initDB }    = require('./config/db')
-const socketService = require('./services/socketService')
-const { startMock, stopMock } = require('./services/mockGenerator')
-const sensorRoutes  = require('./routes/sensorRoutes')
+const express        = require('express')
+const http           = require('http')
+const cors           = require('cors')
+const { Server }     = require('socket.io')
+const { initDB }     = require('./config/db')
+const socketService  = require('./services/socketService')
+const { startPolling, stopPolling } = require('./services/blynkPoller')
+const sensorRoutes   = require('./routes/sensorRoutes')
+const controlRoutes  = require('./routes/controlRoutes')
+const webhookRoutes  = require('./routes/webhookRoutes')
 
-const PORT   = parseInt(process.env.PORT)   || 3001
-const ORIGIN = process.env.FRONTEND_URL     || 'http://localhost:3000'
+const PORT   = parseInt(process.env.PORT) || 3001
+const ORIGIN = process.env.FRONTEND_URL   || 'http://localhost:5173'
 
 const app    = express()
 const server = http.createServer(app)
@@ -19,7 +21,7 @@ const server = http.createServer(app)
 // ── Middleware ────────────────────────────────────────
 app.use(cors({
   origin:      ORIGIN,
-  methods:     ['GET', 'OPTIONS'],
+  methods:     ['GET', 'POST', 'OPTIONS'],
   credentials: true,
 }))
 app.use(express.json())
@@ -42,11 +44,13 @@ io.on('connection', (socket) => {
 })
 
 // ── Routes ────────────────────────────────────────────
-app.use('/api/sensors', sensorRoutes)
+app.use('/api/sensors',   sensorRoutes)
+app.use('/api/control',   controlRoutes)
+app.use('/blynk/webhook', webhookRoutes)
 
 app.get('/health', (_req, res) => res.json({
   status:    'ok',
-  mode:      '🎭 MOCK DATA',
+  mode:      '🔵 BLYNK LIVE',
   uptime:    Math.floor(process.uptime()) + 's',
   timestamp: new Date().toISOString(),
   clients:   io.engine.clientsCount,
@@ -58,7 +62,7 @@ app.use((req, res) => {
 
 // ── Startup ───────────────────────────────────────────
 async function start() {
-  console.log('\n🎭 IoT Dashboard Backend — MOCK MODE')
+  console.log('\n🔵 IoT Dashboard Backend — BLYNK MODE')
   console.log('═══════════════════════════════════════')
 
   try {
@@ -68,8 +72,8 @@ async function start() {
     console.log('🔌 Step 2/3 — Initializing Socket.io...')
     socketService.init(io)
 
-    console.log('🎭 Step 3/3 — Starting mock generator...')
-    startMock()
+    console.log('🔵 Step 3/3 — Starting Blynk poller...')
+    startPolling()
 
     server.listen(PORT, () => {
       console.log('═══════════════════════════════════════')
@@ -77,18 +81,19 @@ async function start() {
       console.log(`🔍  Health   → http://localhost:${PORT}/health`)
       console.log(`📊  Latest   → http://localhost:${PORT}/api/sensors/latest`)
       console.log(`📋  History  → http://localhost:${PORT}/api/sensors/history`)
-      console.log('═══════════════════════════════════════')
-      console.log('🎭  Generating mock temperature every 2s')
-      console.log('    No Blynk token needed!\n')
+      console.log(`🎛️  Control  → http://localhost:${PORT}/api/control/[power|fan|lights]`)
+      console.log(`🪝  Webhook  → http://localhost:${PORT}/blynk/webhook`)
+      console.log('═══════════════════════════════════════\n')
     })
 
   } catch (err) {
     console.error('\n❌ STARTUP FAILED:', err.message)
     console.error('\n📋 Checklist:')
     console.error('  1. PostgreSQL running?')
-    console.error('  2. Database exists?  → createdb oven_dashboard')
-    console.error('  3. .env correct?     → Check DATABASE_URL')
-    console.error('  4. npm install done? → npm install\n')
+    console.error('  2. Database exists?       → createdb oven_dashboard')
+    console.error('  3. .env correct?          → Check DATABASE_URL')
+    console.error('  4. BLYNK_AUTH_TOKEN set?  → Check .env')
+    console.error('  5. npm install done?      → npm install\n')
     process.exit(1)
   }
 }
@@ -96,7 +101,7 @@ async function start() {
 // ── Graceful Shutdown ─────────────────────────────────
 function shutdown(signal) {
   console.log(`\n${signal} — shutting down...`)
-  stopMock()
+  stopPolling()
   server.close(() => { process.exit(0) })
   setTimeout(() => process.exit(1), 5000).unref()
 }

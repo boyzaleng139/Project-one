@@ -71,7 +71,7 @@ export default function History({ history }) {
       <div className="page-header">
         <div>
           <h1 className="page-title">ประวัติข้อมูลอุณหภูมิ</h1>
-          <p className="page-subtitle">ข้อมูลจากโหมดจำลอง (Mock Mode)</p>
+          <p className="page-subtitle">ข้อมูลย้อนหลังจาก Backend</p>
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import Sidebar        from './components/Sidebar';
 import Dashboard      from './pages/Dashboard';
 import History        from './pages/History';
-import { useMockData } from './hooks/useMockData';
+import { useLiveData } from './hooks/useSocket';
 
 /* ── Bottom-nav icons ─────────────────────────────────────── */
 function GridIcon({ size = 22 }) {
@@ -28,9 +28,9 @@ function ClockOutlineIcon({ size = 22 }) {
 
 /* ── App ──────────────────────────────────────────────────── */
 export default function App() {
-  const [page, setPage]    = useState('dashboard');
-  const handleNavigate     = useCallback((p) => setPage(p), []);
-  const mockData           = useMockData();
+  const [page, setPage]  = useState('dashboard');
+  const handleNavigate   = useCallback((p) => setPage(p), []);
+  const liveData         = useLiveData();
 
   return (
     <div className="app-shell">
@@ -41,8 +41,8 @@ export default function App() {
       {/* Main scrollable area */}
       <main className="main-content">
         {page === 'dashboard'
-          ? <Dashboard {...mockData} />
-          : <History   history={mockData.history} />
+          ? <Dashboard {...liveData} />
+          : <History   history={liveData.history} />
         }
       </main>
 

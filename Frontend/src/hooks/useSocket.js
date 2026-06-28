@@ -1,100 +1,116 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { io }         from 'socket.io-client';
 import { getHistory } from '../api/sensorApi';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-const MAX_HISTORY = 100;
+const SOCKET_URL  = import.meta.env.VITE_BACKEND_URL ?? '';
+const MAX_CHART   = 20;
+const MAX_HISTORY = 200;
+
+/* ── Helpers ─────────────────────────────────────────────── */
+
+function toTimeStr(iso) {
+  return new Date(iso).toLocaleTimeString('th-TH', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  });
+}
 
 /**
- * Connects to the Socket.io server and streams live temperature readings.
+ * Normalise a raw API/socket row into the shape all components expect:
+ * { time: string, temp: number, timestamp: string }
+ */
+function toPoint(row) {
+  return {
+    time:      toTimeStr(row.timestamp),
+    temp:      parseFloat(row.temp),
+    timestamp: row.timestamp instanceof Date
+      ? row.timestamp.toISOString()
+      : String(row.timestamp),
+  };
+}
+
+/* ── useLiveData ─────────────────────────────────────────── */
+
+/**
+ * Streams live temperature data from the Backend.
  *
- * On mount pre-fetches the last 100 rows so the chart is populated before the
- * first socket event.  History is kept in **ascending** order (oldest → newest).
+ * On mount: pre-fetches the last 200 rows from REST so the chart
+ * is populated before the first socket event arrives.
  *
- * `sessionStart` is the ISO timestamp of the very first reading in the current
- * browser session.  It is set exactly once (guarded by a ref) from either the
- * preloaded history or the first live socket event, whichever comes first.
+ * On each `sensor_update` socket event: updates temperature, chart
+ * buffer (ASC, last 20), and history list (DESC, newest first).
  *
- * `dryingSeconds` is derived via useMemo — never stored in backend.
+ * Returns the same shape expected by all Dashboard and History
+ * components.
  *
  * @returns {{
- *   currentTemp:    number,
- *   lastTimestamp:  string|null,
- *   sessionStart:   string|null,
- *   dryingSeconds:  number,
- *   history:        Array<{ id: number, temp: number, timestamp: string }>,
- *   isConnected:    boolean,
+ *   temperature:  number,
+ *   chartData:    Array<{time: string, temp: number}>,
+ *   history:      Array<{time: string, temp: number, timestamp: string}>,
+ *   lastUpdate:   Date,
+ *   isConnected:  boolean,
  * }}
  */
-export function useSocket() {
-  const [currentTemp,   setCurrentTemp]   = useState(0);
-  const [lastTimestamp, setLastTimestamp] = useState(null);
-  const [sessionStart,  setSessionStart]  = useState(null);
-  const [history,       setHistory]       = useState([]);
-  const [isConnected,   setIsConnected]   = useState(false);
+export function useLiveData() {
+  const [temperature, setTemperature] = useState(0);
+  const [lastUpdate,  setLastUpdate]  = useState(() => new Date());
+  const [chartData,   setChartData]   = useState([]);
+  const [history,     setHistory]     = useState([]);
+  const [isConnected, setIsConnected] = useState(false);
 
-  const socketRef      = useRef(null);
-  const sessionStarted = useRef(false);   // guard — set sessionStart only once
+  // Mutable chart buffer avoids stale-closure issues inside socket handler
+  const chartBuf = useRef([]);
 
-  /* ── Helper: set session start exactly once ──────────────── */
-  const markSessionStart = (iso) => {
-    if (sessionStarted.current) return;
-    sessionStarted.current = true;
-    setSessionStart(iso);
-  };
-
-  /* ── Pre-load chart history on mount ──────────────────────── */
+  /* ── Pre-load history from REST API ──────────────────────── */
   useEffect(() => {
     getHistory({ limit: MAX_HISTORY })
       .then((data) => {
-        if (data.length === 0) return;
-        // API returns DESC (newest-first) → reverse to ASC for chart
-        const asc = [...data].reverse();
-        setHistory(asc);
-        // Seed current readings from newest row (data[0])
-        setCurrentTemp(parseFloat(data[0].temp));
-        setLastTimestamp(data[0].timestamp);
-        // Oldest row in ASC array = asc[0] — use as session start
-        markSessionStart(asc[0].timestamp);
+        if (!data.length) return;
+
+        // API returns DESC (newest first)
+        const desc      = data.map(toPoint);
+        // Chart needs ASC (oldest → newest), last MAX_CHART points
+        const chartSlice = [...desc].reverse().slice(-MAX_CHART);
+
+        chartBuf.current = chartSlice;
+        setChartData(chartSlice);
+        setHistory(desc);
+        setTemperature(desc[0].temp);
+        setLastUpdate(new Date(desc[0].timestamp));
       })
       .catch((err) =>
-        console.error('[useSocket] pre-load failed:', err.message)
+        console.error('[useLiveData] pre-load failed:', err.message)
       );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── Real-time socket connection ───────────────────────────── */
+  /* ── Real-time Socket.io connection ──────────────────────── */
   useEffect(() => {
-    const socket = io(BACKEND_URL, {
+    const socket = io(SOCKET_URL, {
       transports:           ['websocket', 'polling'],
       reconnectionDelay:    1000,
       reconnectionAttempts: Infinity,
     });
-    socketRef.current = socket;
 
     socket.on('connect',       () => setIsConnected(true));
     socket.on('disconnect',    () => setIsConnected(false));
     socket.on('connect_error', () => setIsConnected(false));
 
     socket.on('sensor_update', (payload) => {
-      setCurrentTemp(parseFloat(payload.temp));
-      setLastTimestamp(payload.timestamp);
-      // Mark session start from the first live event (if preload was empty)
-      markSessionStart(payload.timestamp);
-      // Append to end (ASC), keep the last MAX_HISTORY entries
-      setHistory((prev) => [...prev, payload].slice(-MAX_HISTORY));
+      const point = toPoint(payload);
+
+      setTemperature(point.temp);
+      setLastUpdate(new Date(point.timestamp));
+
+      // Chart: append to ASC buffer, keep last MAX_CHART
+      const nextChart = [...chartBuf.current, point].slice(-MAX_CHART);
+      chartBuf.current = nextChart;
+      setChartData(nextChart);
+
+      // History: prepend (DESC), cap at MAX_HISTORY
+      setHistory((prev) => [point, ...prev].slice(0, MAX_HISTORY));
     });
 
     return () => socket.disconnect();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── Derived: elapsed drying seconds ────────────────────────── */
-  const dryingSeconds = useMemo(() => {
-    if (!sessionStart || !lastTimestamp) return 0;
-    const diff = new Date(lastTimestamp) - new Date(sessionStart);
-    return Math.max(0, Math.floor(diff / 1000));
-  }, [sessionStart, lastTimestamp]);
-
-  return { currentTemp, lastTimestamp, sessionStart, dryingSeconds, history, isConnected };
+  return { temperature, chartData, history, lastUpdate, isConnected };
 }

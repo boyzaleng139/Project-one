@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+const BASE = import.meta.env.VITE_BACKEND_URL ?? '';
 
 /**
  * Shared axios instance — all sensor API calls go through here.
