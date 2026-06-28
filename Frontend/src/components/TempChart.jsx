@@ -2,13 +2,14 @@ import { useMemo } from 'react';
 import PropTypes   from 'prop-types';
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ReferenceLine,
+  ReferenceArea,
 } from 'recharts';
 
 /* ── Custom Tooltip ──────────────────────────────────────── */
@@ -38,18 +39,20 @@ function CustomTooltip({ active, payload, label }) {
 
 /* ── TempChart ───────────────────────────────────────────── */
 
-/**
- * Responsive temperature-over-time line chart (warm theme).
- * Expects data in ascending order (oldest → newest).
- * Shows dashed reference lines at 50 °C and 70 °C zone boundaries.
- *
- * @param {{ data: Array<{time: string, temp: number}> }} props
- */
 export default function TempChart({ data }) {
   const formattedData = useMemo(
     () => data.map((d) => ({ time: d.time, temp: parseFloat(d.temp) })),
     [data]
   );
+
+  // Compute Y domain to properly place zone backgrounds
+  const yDomain = useMemo(() => {
+    if (!formattedData.length) return [0, 100];
+    const temps = formattedData.map(d => d.temp);
+    const min = Math.min(...temps);
+    const max = Math.max(...temps);
+    return [Math.max(0, Math.floor(min / 10) * 10 - 5), Math.min(110, Math.ceil(max / 10) * 10 + 10)];
+  }, [formattedData]);
 
   return (
     <div className="card chart-card">
@@ -75,11 +78,9 @@ export default function TempChart({ data }) {
         <div className="chart-empty">
           <svg className="chart-empty-svg" width="120" height="56" viewBox="0 0 120 56"
                fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Skeleton grid lines */}
             <line x1="0" y1="14" x2="120" y2="14" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
             <line x1="0" y1="28" x2="120" y2="28" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
             <line x1="0" y1="42" x2="120" y2="42" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
-            {/* Skeleton wave */}
             <polyline
               points="0,42 18,34 36,38 54,20 72,26 90,18 108,28 120,24"
               stroke="currentColor" strokeWidth="2.5"
@@ -91,15 +92,44 @@ export default function TempChart({ data }) {
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={260}>
-          <LineChart
+          <AreaChart
             data={formattedData}
             margin={{ top: 8, right: 14, left: -16, bottom: 0 }}
           >
+            <defs>
+              <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor="#EF4444" stopOpacity={0.25} />
+                <stop offset="35%"  stopColor="#F59E0B" stopOpacity={0.15} />
+                <stop offset="70%"  stopColor="#3B82F6" stopOpacity={0.10} />
+                <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+
             <CartesianGrid
               strokeDasharray="4 4"
               stroke="var(--border)"
               vertical={false}
             />
+
+            {/* Zone background bands */}
+            {yDomain[0] < 50 && (
+              <ReferenceArea
+                y1={yDomain[0]} y2={Math.min(50, yDomain[1])}
+                fill="#3B82F6" fillOpacity={0.03}
+              />
+            )}
+            {yDomain[0] < 70 && yDomain[1] > 50 && (
+              <ReferenceArea
+                y1={Math.max(50, yDomain[0])} y2={Math.min(70, yDomain[1])}
+                fill="#F59E0B" fillOpacity={0.04}
+              />
+            )}
+            {yDomain[1] > 70 && (
+              <ReferenceArea
+                y1={Math.max(70, yDomain[0])} y2={yDomain[1]}
+                fill="#EF4444" fillOpacity={0.04}
+              />
+            )}
 
             <XAxis
               dataKey="time"
@@ -110,7 +140,7 @@ export default function TempChart({ data }) {
             />
 
             <YAxis
-              domain={['auto', 'auto']}
+              domain={yDomain}
               tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
@@ -122,7 +152,6 @@ export default function TempChart({ data }) {
               cursor={{ stroke: 'var(--border)', strokeWidth: 1 }}
             />
 
-            {/* Zone boundary reference lines */}
             <ReferenceLine
               y={50} stroke="#3B82F6"
               strokeDasharray="4 3" strokeOpacity={0.5} strokeWidth={1}
@@ -132,16 +161,17 @@ export default function TempChart({ data }) {
               strokeDasharray="4 3" strokeOpacity={0.5} strokeWidth={1}
             />
 
-            <Line
+            <Area
               type="monotone"
               dataKey="temp"
               stroke="var(--accent)"
               strokeWidth={2}
+              fill="url(#tempGradient)"
               dot={false}
               activeDot={{ r: 5, fill: 'var(--accent)', stroke: '#FFFFFF', strokeWidth: 2 }}
               isAnimationActive={false}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       )}
 

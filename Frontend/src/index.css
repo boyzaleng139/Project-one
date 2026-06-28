@@ -782,6 +782,12 @@ button {
 
   .chart-ref-row { flex-wrap: wrap; gap: 10px; }
   .chart-note { margin-left: 0; }
+
+  .trend-row { gap: 6px; }
+  .trend-badge { font-size: 0.78rem; }
+  .trend-eta { font-size: 0.68rem; }
+
+  .alert-settings-panel { min-width: 200px; right: -8px; }
 }
 
 /* Extra-small  < 480px  */
@@ -802,6 +808,136 @@ button {
   /* Prevent label overlap on small progress bar */
   .chart-empty { height: 200px; }
 }
+
+/* ── 21. Overheat Alert Overlay ───────────────────────────── */
+
+@keyframes overheatPulse {
+  0%   { box-shadow: inset 0 0 30px rgba(239, 68, 68, 0.0); }
+  50%  { box-shadow: inset 0 0 30px rgba(239, 68, 68, 0.25); }
+  100% { box-shadow: inset 0 0 30px rgba(239, 68, 68, 0.0); }
+}
+
+.overheat-overlay {
+  position: fixed;
+  inset:    0;
+  pointer-events: none;
+  z-index:  200;
+  animation: overheatPulse 1.6s ease-in-out infinite;
+  border:   3px solid rgba(239, 68, 68, 0.35);
+  border-radius: 0;
+}
+
+.temp-card--alert {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow:   0 0 16px rgba(239, 68, 68, 0.12), var(--shadow-card);
+}
+
+/* ── 22. Trend Indicator ─────────────────────────────────── */
+
+.trend-row {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  flex-wrap:   wrap;
+  margin-bottom: 4px;
+}
+
+.trend-badge {
+  font-size:   0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.trend-eta {
+  font-size:   0.72rem;
+  color:       var(--text-muted);
+  font-style:  italic;
+}
+
+/* ── 23. Alert Settings ──────────────────────────────────── */
+
+.alert-settings-wrap {
+  position: relative;
+}
+
+.alert-settings-toggle {
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  width:         32px;
+  height:        32px;
+  border-radius: var(--radius-sm);
+  color:         var(--text-muted);
+  transition:    background 0.15s, color 0.15s;
+}
+.alert-settings-toggle:hover {
+  background: var(--surface-alt);
+  color:      var(--text);
+}
+
+.alert-settings-panel {
+  position:      absolute;
+  top:           100%;
+  right:         0;
+  margin-top:    6px;
+  background:    var(--surface);
+  border:        1px solid var(--border-alt);
+  border-radius: var(--radius);
+  box-shadow:    var(--shadow-md);
+  padding:       14px;
+  min-width:     220px;
+  z-index:       50;
+  display:       flex;
+  flex-direction: column;
+  gap:           10px;
+  animation:     slideDown 0.2s ease;
+}
+
+.alert-row {
+  display:        flex;
+  flex-direction: column;
+  gap:            5px;
+}
+
+.alert-mute-btn {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           6px;
+  padding:       6px 10px;
+  border-radius: var(--radius-sm);
+  font-size:     0.78rem;
+  font-weight:   500;
+  color:         var(--text-muted);
+  background:    var(--surface-alt);
+  border:        1px solid var(--border);
+  transition:    background 0.15s;
+}
+.alert-mute-btn:hover { background: var(--border); }
+
+.alert-label {
+  font-size: 0.75rem;
+  color:     var(--text-muted);
+}
+.alert-label strong {
+  color: var(--accent);
+}
+
+.alert-slider {
+  width:      100%;
+  accent-color: var(--accent);
+  cursor:     pointer;
+}
+
+.alert-notif-btn {
+  font-size:     0.75rem;
+  font-weight:   500;
+  padding:       6px 10px;
+  border-radius: var(--radius-sm);
+  background:    var(--accent);
+  color:         #ffffff;
+  transition:    background 0.15s;
+}
+.alert-notif-btn:hover { background: #C04E28; }
 
 /* ── 20. Scrollbar ────────────────────────────────────────── */
 
