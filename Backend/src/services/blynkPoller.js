@@ -34,7 +34,7 @@ const MAX_LOG_ERRORS = 5   // suppress repeated error logs after this threshold
  * @returns {Promise<number>} temperature value in °C
  */
 async function fetchTemp() {
-  const url = `${BASE_URL}/get?token=${TOKEN}&v1`
+  const url = `${BASE_URL}/get?token=${TOKEN}&V10`
 
   const response = await fetch(url, {
     method:  'GET',
@@ -128,7 +128,7 @@ function startPolling() {
   }
 
   console.log(`🔄 Blynk poller starting...`)
-  console.log(`   Endpoint : ${BASE_URL}/get?token=${TOKEN.substring(0, 8)}...&v1`)
+  console.log(`   Endpoint : ${BASE_URL}/get?token=${TOKEN.substring(0, 8)}...&V10`)
   console.log(`   Interval : ${INTERVAL_MS}ms`)
 
   // Run immediately, then on interval
