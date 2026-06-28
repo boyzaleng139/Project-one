@@ -38,24 +38,24 @@ function ProgressBar({ temp }) {
   const bar = { position: 'absolute', top: 0, height: '100%' };
 
   return (
-    <div style={{ marginTop: '20px' }}>
+    <div style={{ marginTop: '16px' }}>
 
       {/* ── Track ── */}
-      <div style={{ position: 'relative', height: '10px', borderRadius: '5px',
+      <div style={{ position: 'relative', height: '14px', borderRadius: '7px',
                     background: 'var(--border)', overflow: 'visible' }}>
 
         {/* Zone background tints */}
-        <div style={{ ...bar, left: 0,          width: `${N_END}%`,
-                      background: 'rgba(59,130,246,0.10)',  borderRadius: '5px 0 0 5px' }} />
+        <div style={{ ...bar, left: 0,           width: `${N_END}%`,
+                      background: 'rgba(59,130,246,0.12)',  borderRadius: '7px 0 0 7px' }} />
         <div style={{ ...bar, left: `${N_END}%`, width: `${W_END - N_END}%`,
-                      background: 'rgba(245,158,11,0.10)' }} />
+                      background: 'rgba(245,158,11,0.12)' }} />
         <div style={{ ...bar, left: `${W_END}%`, width: `${MAX - W_END}%`,
-                      background: 'rgba(239,68,68,0.10)',   borderRadius: '0 5px 5px 0' }} />
+                      background: 'rgba(239,68,68,0.12)',   borderRadius: '0 7px 7px 0' }} />
 
         {/* Filled segments */}
         {normFill > 0 && (
           <div style={{ ...bar, left: 0, width: `${normFill}%`, background: '#3B82F6',
-                        borderRadius: `5px ${normFill >= N_END ? 0 : 5}px ${normFill >= N_END ? 0 : 5}px 5px`,
+                        borderRadius: `7px ${normFill >= N_END ? 0 : 7}px ${normFill >= N_END ? 0 : 7}px 7px`,
                         transition: 'width 0.45s ease' }} />
         )}
         {warmFill > 0 && (
@@ -64,26 +64,26 @@ function ProgressBar({ temp }) {
         )}
         {hotFill > 0 && (
           <div style={{ ...bar, left: `${W_END}%`, width: `${hotFill}%`, background: '#EF4444',
-                        borderRadius: '0 5px 5px 0', transition: 'width 0.45s ease' }} />
+                        borderRadius: '0 7px 7px 0', transition: 'width 0.45s ease' }} />
         )}
 
         {/* Zone dividers */}
         <div style={{ ...bar, left: `${N_END}%`, width: '2px',
-                      background: 'var(--bg)', opacity: 0.9, zIndex: 2 }} />
+                      background: 'var(--bg)', opacity: 0.85, zIndex: 2 }} />
         <div style={{ ...bar, left: `${W_END}%`, width: '2px',
-                      background: 'var(--bg)', opacity: 0.9, zIndex: 2 }} />
+                      background: 'var(--bg)', opacity: 0.85, zIndex: 2 }} />
 
         {/* Sliding indicator dot */}
         <div style={{
           position:    'absolute',
-          left:        `calc(${pct}% - 9px)`,
+          left:        `calc(${pct}% - 11px)`,
           top:         '-5px',
-          width:       '20px',
-          height:      '20px',
+          width:       '24px',
+          height:      '24px',
           borderRadius:'50%',
           background:  '#FFFFFF',
-          border:      `2.5px solid ${indColor}`,
-          boxShadow:   '0 1px 4px rgba(0,0,0,0.15)',
+          border:      `3px solid ${indColor}`,
+          boxShadow:   `0 2px 6px rgba(0,0,0,0.18), 0 0 0 3px ${indColor}22`,
           zIndex:      3,
           transition:  'left 0.45s ease, border-color 0.3s',
         }} />
@@ -91,17 +91,17 @@ function ProgressBar({ temp }) {
 
       {/* ── Scale labels ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between',
-                    position: 'relative', marginTop: '15px' }}>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>0°C</span>
-        <span style={{ fontSize: '11px', color: '#3B82F6',
+                    position: 'relative', marginTop: '12px' }}>
+        <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)' }}>0°C</span>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: '#3B82F6',
                        position: 'absolute', left: `${N_END}%`, transform: 'translateX(-50%)' }}>
           50°C
         </span>
-        <span style={{ fontSize: '11px', color: '#F59E0B',
+        <span style={{ fontSize: '12px', fontWeight: 600, color: '#F59E0B',
                        position: 'absolute', left: `${W_END}%`, transform: 'translateX(-50%)' }}>
           70°C
         </span>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>100°C</span>
+        <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)' }}>100°C</span>
       </div>
     </div>
   );
@@ -140,13 +140,13 @@ export default function TempCard({ temp }) {
 
       {/* Big temperature number */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px',
-                    marginTop: '4px', marginBottom: '12px' }}>
-        <span style={{ fontSize: '58px', fontWeight: 500, lineHeight: 1,
-                       color: 'var(--accent)', letterSpacing: '-1px' }}>
+                    marginTop: '8px', marginBottom: '14px' }}>
+        <span style={{ fontSize: '72px', fontWeight: 700, lineHeight: 1,
+                       color: 'var(--accent)', letterSpacing: '-2px' }}>
           {temp.toFixed(1)}
         </span>
-        <span style={{ fontSize: '24px', fontWeight: 400,
-                       color: 'var(--accent)', paddingBottom: '6px' }}>
+        <span style={{ fontSize: '26px', fontWeight: 500,
+                       color: 'var(--accent)', paddingBottom: '8px', opacity: 0.8 }}>
           °C
         </span>
       </div>

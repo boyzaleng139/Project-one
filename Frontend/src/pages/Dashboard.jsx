@@ -52,7 +52,8 @@ export default function Dashboard({ temperature, chartData, lastUpdate, isConnec
 
         {/* Footer */}
         <p className="dashboard-footer">
-          🔴 เชื่อมต่อ Backend • อัปเดตอัตโนมัติผ่าน Socket.io
+          <span className={`footer-dot ${isConnected ? 'footer-dot--ok' : 'footer-dot--err'}`} />
+          เชื่อมต่อ Backend • อัปเดตอัตโนมัติผ่าน Socket.io
         </p>
 
       </div>

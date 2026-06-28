@@ -73,8 +73,21 @@ export default function TempChart({ data }) {
       {/* ── Chart or empty state ── */}
       {data.length === 0 ? (
         <div className="chart-empty">
-          <span className="chart-empty-icon">📡</span>
-          กำลังสร้างข้อมูล...
+          <svg className="chart-empty-svg" width="120" height="56" viewBox="0 0 120 56"
+               fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Skeleton grid lines */}
+            <line x1="0" y1="14" x2="120" y2="14" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
+            <line x1="0" y1="28" x2="120" y2="28" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
+            <line x1="0" y1="42" x2="120" y2="42" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" opacity="0.4" />
+            {/* Skeleton wave */}
+            <polyline
+              points="0,42 18,34 36,38 54,20 72,26 90,18 108,28 120,24"
+              stroke="currentColor" strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round"
+              fill="none" opacity="0.55"
+            />
+          </svg>
+          <span className="chart-empty-text">รอรับข้อมูลจากเซ็นเซอร์...</span>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={260}>

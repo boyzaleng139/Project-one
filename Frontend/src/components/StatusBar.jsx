@@ -16,15 +16,17 @@ export default function StatusBar({ isConnected, lastUpdate }) {
 
   return (
     <div className={`status-bar ${isConnected ? 'status-bar--ok' : 'status-bar--err'}`}>
-      <span className={`status-dot ${isConnected ? 'status-dot--ok' : 'status-dot--err'}`} />
-      <span>
-        {isConnected
-          ? 'เชื่อมต่อกับเซิร์ฟเวอร์แล้ว'
-          : '⚠️ ขาดการเชื่อมต่อ — กำลังเชื่อมต่อใหม่...'}
-      </span>
-      {isConnected && timeStr && (
-        <span className="status-time">อัปเดต: {timeStr}</span>
-      )}
+      <div className="status-bar-inner">
+        <span className={`status-dot ${isConnected ? 'status-dot--ok' : 'status-dot--err'}`} />
+        <span>
+          {isConnected
+            ? 'เชื่อมต่อกับเซิร์ฟเวอร์แล้ว'
+            : '⚠️ ขาดการเชื่อมต่อ — กำลังเชื่อมต่อใหม่...'}
+        </span>
+        {isConnected && timeStr && (
+          <span className="status-time">อัปเดต: {timeStr}</span>
+        )}
+      </div>
     </div>
   );
 }
