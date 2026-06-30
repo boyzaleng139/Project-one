@@ -3,6 +3,11 @@ import PropTypes    from 'prop-types';
 import StatusBar    from '../components/StatusBar';
 import TempCard     from '../components/TempCard';
 import TempChart    from '../components/TempChart';
+import { useOverheatAlert }    from '../hooks/useOverheatAlert';
+import { useDocumentTitle }    from '../hooks/useDocumentTitle';
+import { useFavicon }          from '../hooks/useFavicon';
+import { useTrend }            from '../hooks/useTrend';
+import { useConnectionUptime } from '../hooks/useConnectionUptime';
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -14,27 +19,23 @@ function todayThai() {
 
 /* ── Dashboard ───────────────────────────────────────────── */
 
-/**
- * Live monitoring dashboard.
- *
- * Layout:
- *   StatusBar       (full width, top)
- *   Page header     (title + Thai date)
- *   TempCard
- *   TempChart       (full width)
- *   Footer note
- *
- * All data is received as props from App.jsx via useLiveData().
- */
 export default function Dashboard({ temperature, chartData, lastUpdate, isConnected }) {
   const today = useMemo(() => todayThai(), []);
 
+  const alert  = useOverheatAlert(temperature);
+  const trend  = useTrend(chartData, alert.threshold);
+  const uptime = useConnectionUptime(isConnected);
+
+  useDocumentTitle(temperature);
+  useFavicon(temperature);
+
   return (
     <>
-      {/* Status bar */}
+      {/* Overheat pulsing border overlay */}
+      {alert.isAlerting && <div className="overheat-overlay" />}
+
       <StatusBar isConnected={isConnected} lastUpdate={lastUpdate} />
 
-      {/* Page content */}
       <div className="page-content">
 
         {/* Page header */}
@@ -45,14 +46,18 @@ export default function Dashboard({ temperature, chartData, lastUpdate, isConnec
           </div>
         </div>
 
-        <TempCard temp={temperature} />
+        <TempCard
+          temp={temperature}
+          alert={alert}
+          trend={trend}
+        />
 
-        {/* Rolling trend chart */}
         <TempChart data={chartData} />
 
         {/* Footer */}
         <p className="dashboard-footer">
-          🔴 เชื่อมต่อ Backend • อัปเดตอัตโนมัติผ่าน Socket.io
+          <span className={`footer-dot ${isConnected ? 'footer-dot--ok' : 'footer-dot--err'}`} />
+          {uptime || 'เชื่อมต่อ Backend'} • อัปเดตอัตโนมัติผ่าน Socket.io
         </p>
 
       </div>

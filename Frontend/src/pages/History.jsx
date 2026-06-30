@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import PropTypes  from 'prop-types';
 import TempChart  from '../components/TempChart';
 
@@ -24,6 +24,17 @@ function formatTs(iso) {
   } catch { return iso; }
 }
 
+function DownloadIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
 /* ── History ─────────────────────────────────────────────── */
 
 /**
@@ -39,6 +50,23 @@ function formatTs(iso) {
  */
 export default function History({ history }) {
   const [page, setPage] = useState(1);
+
+  const exportCsv = useCallback(() => {
+    if (!history.length) return;
+    const header = 'ลำดับ,เวลา,อุณหภูมิ (°C),สถานะ\n';
+    const rows = history.map((row, i) => {
+      const st = getTempStatus(row.temp);
+      return `${i + 1},"${formatTs(row.timestamp)}",${row.temp.toFixed(1)},${st.label}`;
+    }).join('\n');
+    const bom = '﻿';
+    const blob = new Blob([bom + header + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `temperature_history_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [history]);
 
   const totalPages = Math.max(1, Math.ceil(history.length / PAGE_SIZE));
   const safePage   = Math.min(page, totalPages);
@@ -73,6 +101,11 @@ export default function History({ history }) {
           <h1 className="page-title">ประวัติข้อมูลอุณหภูมิ</h1>
           <p className="page-subtitle">ข้อมูลย้อนหลังจาก Backend</p>
         </div>
+        {history.length > 0 && (
+          <button className="btn btn-ghost" onClick={exportCsv}>
+            <DownloadIcon /> Export CSV
+          </button>
+        )}
       </div>
 
       {/* ── Summary pills ── */}
